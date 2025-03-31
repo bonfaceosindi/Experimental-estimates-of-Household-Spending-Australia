@@ -1,0 +1,470 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+![](logo.png){width="150px"}
+
+# UTS 37010
+
+**Assessment Task 1: Assignment Part A**\
+**Autumn 2025**
+
+**Coversheet**
+
+**Student Acknowledgement**
+
+I acknowledge that I am aware of the University rules regarding plagiarism and academic misconduct. I confirm that this assignment has not been previously submitted for assessment at UTS or any other institution.
+
+**Name**: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_   **Student Number**: \_\_\_\_\_\_\_\_\_\_\_\_\ \
+**Signature**: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+\newpage
+
+
+# Question 1: Some Maths [12 marks]
+
+------------------------------------------------------------------------
+
+## (a) Chi-squared and Confidence Interval [3 marks]
+
+Given $X_i \sim \mathcal{N}(\mu, \sigma^2)$ for $i = 1, 2, \dots, n$, and $S^2$ is the sample variance, the test statistic
+
+$$
+\frac{(n-1)S^2}{\sigma^2} \sim \chi^2(n-1)
+$$
+
+To construct a one-sided $95\%$ confidence interval to test $H_0: \sigma^2 \geq c$ versus $H_A: \sigma^2 < c$, use
+
+$$
+P\left( \sigma^2 > \frac{(n-1)S^2}{\chi^2_{1-\alpha, n-1}} \right) = \alpha
+$$
+
+So the lower bound for $\sigma^2$ is
+
+$$
+\sigma^2 > \frac{(n-1)S^2}{\chi^2_{0.95, n-1}}
+$$
+
+------------------------------------------------------------------------
+
+## (b) Covariance of Least Squares Estimators $\hat{\alpha}_i$ [3 marks]
+
+Consider the model
+
+$$
+Y_{ij} = \mu + \alpha_i + \epsilon_{ij}, \quad i \in \{1, \dots, a\}, \; j \in \{1, \dots, n\}
+$$
+
+with $\epsilon_{ij} \sim \mathcal{N}(0, \sigma^2)$. Then the least squares estimators are
+
+$$
+\hat{\alpha}_i = \bar{Y}_i - \bar{Y}
+$$
+
+Using ANOVA theory under the constraint $\sum \alpha_i = 0$, we have
+
+$$
+\text{Cov}(\hat{\alpha}_i, \hat{\alpha}_j) = -\frac{\sigma^2}{an}, \quad i \neq j
+$$
+
+------------------------------------------------------------------------
+
+## (c) Least Squares Estimator in Log-linear Model [3 marks]
+
+Given the model
+
+$$
+e^{Y_i} = \beta x_i e^{\epsilon_i}, \quad \beta, x_i > 0, \; \epsilon_i \sim \mathcal{N}(0, \sigma^2)
+$$
+
+Take logs
+
+$$
+Y_i = \log(\beta) + \log(x_i) + \epsilon_i
+$$
+
+Then the transformed model is
+
+$$
+\tilde{Y}_i = Y_i - \log(x_i) = \log(\beta) + \epsilon_i
+$$
+
+By least squares
+
+$$
+\log(\hat{\beta}) = \bar{Y} - \frac{1}{n} \sum_{i=1}^n \log(x_i)
+$$
+
+Exponentiate both sides
+
+$$
+\hat{\beta} = e^{\bar{Y}} \prod_{i=1}^n x_i^{-1/n}
+$$
+
+Which simplifies to
+
+$$
+\hat{\beta} = e^{\bar{Y}} \prod_{i=1}^n \left( \frac{1}{x_i} \right)^{1/n}
+$$
+
+------------------------------------------------------------------------
+
+## (d) Bias of Estimator $\hat{\beta}$ [3 marks]
+
+We examine if $\hat{\beta}$ is unbiased
+
+$$
+\hat{\beta} = \exp(\bar{Y}) \prod_{i=1}^n x_i^{-1/n}
+$$
+
+Recall
+
+$$
+Y_i = \log(\beta) + \log(x_i) + \epsilon_i \Rightarrow \bar{Y} = \log(\beta) + \frac{1}{n} \sum \log(x_i) + \bar{\epsilon}
+$$
+
+So
+
+$$
+\hat{\beta} = \beta \cdot \exp(\bar{\epsilon})
+$$
+
+Since $\bar{\epsilon} \sim \mathcal{N}(0, \sigma^2/n)$, use the MGF
+
+$$
+E[\exp(\bar{\epsilon})] = \exp\left( \frac{\sigma^2}{2n} \right)
+$$
+
+Hence
+
+$$
+E[\hat{\beta}] = \beta \cdot \exp\left( \frac{\sigma^2}{2n} \right) \neq \beta
+$$
+
+So $\hat{\beta}$ is a **biased** estimator of $\beta$.
+
+------------------------------------------------------------------------
+
+\newpage
+
+
+# Question 2: One and two-sample analysis [12 marks]
+
+## (a) Histogram and normal curve [3 marks]
+
+```{r hist-normal-curve, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+
+data <- read.csv("DataAssignmentA.csv")
+
+# Extract health spending index (assume category 1)
+health_data <- data %>% filter(category == 1)
+
+ggplot(health_data, aes(x = index)) +
+  geom_histogram(aes(y = ..density..), binwidth = 5, fill = "lightblue", color = "black") +
+  geom_density(color = "red", size = 1) +
+  ggtitle("Health Spending Index") +
+  theme_minimal()
+```
+
+The histogram is moderately symmetric but with some slight right skew. The red density curve does not perfectly match a bell shape, suggesting mild deviations from normality, but the sample appears roughly normal for the purposes of t-tests.
+
+## (b) One-sample t-test (Is mean $\neq 125$?) [3 marks]
+
+```{r one-sample-t, echo=FALSE,warning=FALSE}
+t.test(health_data$index, mu = 125)
+```
+
+**Hypotheses**
+
+$H_0: \mu = 125$
+
+$H_A: \mu \neq 125$
+
+**Decision**
+
+The p-value = 1.003e-05 is less than 0.05, so we reject $H_0$.
+
+**Conclusion**
+
+There is strong evidence that the mean health spending index is significantly different from 125.
+
+## (c) Two-sample t-test between time periods [3 marks]
+
+```{r two-sample-test, echo=FALSE,warning=FALSE}
+# Convert date to proper format
+data$date <- as.Date(paste0("01-", data$date), format = "%d-%b-%y")
+
+# Define periods
+july2021_dec2023 <- data %>% 
+  filter(category == 1, date >= as.Date("2021-07-01"), date <= as.Date("2023-12-31")) %>%
+  pull(index)
+
+jan2019_june2021 <- data %>%
+  filter(category == 1, date >= as.Date("2019-01-01"), date <= as.Date("2021-06-30")) %>%
+  pull(index)
+
+# Mean difference test (greater than 15 units?)
+t.test(july2021_dec2023, jan2019_june2021, alternative = "greater", mu = 15)
+```
+
+**Hypotheses**
+
+$H_0: \mu_1 - \mu_2 \leq 15$
+
+$H_A: \mu_1 - \mu_2 > 15$
+
+**Decision**
+
+The p-value = 0.1751 is greater than 0.05, so we do not reject $H_0$.
+
+**Conclusion**
+
+There is insufficient evidence that the health spending index increased by more than 15 units between the two periods.
+
+## (d) F-test for variance (Food vs Alcohol & Tobacco) [3 marks]
+
+```{r variance-test, echo=FALSE,warning=FALSE}
+# category 2: food, category 3: alcohol + tobacco
+food_index <- data %>% filter(category == 2) %>% pull(index)
+alco_index <- data %>% filter(category == 3) %>% pull(index)
+
+var.test(food_index, alco_index, alternative = "less")
+```
+
+**Hypotheses**\
+$H_0: \sigma^2_{\text{food}} = \sigma^2_{\text{alco}}$ - $H_A: \sigma^2_{\text{food}} < \sigma^2_{\text{alco}}$
+
+**Decision**
+
+The p-value = 0.008134 is less than 0.05, so we reject $H_0$.
+
+**Conclusion**
+
+There is strong evidence that the variance in food spending is less than the variance in alcohol and tobacco spending.
+
+------------------------------------------------------------------------
+
+\newpage
+
+# Question 3: Four-sample analysis [12 marks]
+
+## (a) Residuals for category 3 [3 marks]
+
+From the ANOVA model\
+$$ Y_{ij} = \mu + \alpha_i + \epsilon_{ij} $$
+
+To find residuals $\hat{\epsilon}_{3j}$ without fitting the model: 1. Compute the overall mean $\bar{Y}$ 2. Compute the group mean for category 3 $\bar{Y}_3$ 3. Estimate treatment effect $\hat{\alpha}_3 = \bar{Y}_3 - \bar{Y}$ 4. Residuals: $\hat{\epsilon}_{3j} = Y_{3j} - \bar{Y}_3$
+
+These are deviations from category 3’s own group mean.
+
+```{r q3a, echo=FALSE,warning=FALSE}
+# Compute residuals for category 3
+cat3_data <- data %>% filter(category == 3)
+residuals_cat3 <- cat3_data$index - mean(cat3_data$index)
+
+# Sample variance
+var(residuals_cat3)
+```
+
+Sample variance of residuals = **277.02**, reflecting variability within category 3.
+
+## (b) One-way ANOVA test for any mean difference [3 marks]
+
+```{r q3b, echo=FALSE,warning=FALSE}
+anova_model <- aov(index ~ factor(category), data = data)
+summary(anova_model)
+```
+
+**ANOVA Output** F = 15.83, p-value = 2.06e-09
+
+**Hypotheses**
+
+$H_0$: All group means are equal\
+$H_A$: At least one group mean is different
+
+**Decision**
+
+Reject $H_0$ (p \< 0.05)
+
+**Conclusion**
+
+Significant evidence that at least one group's spending index mean is different.
+
+## (c) Multiple comparisons to identify differing groups [3 marks]
+
+```{r q3c, echo=FALSE,warning=FALSE}
+TukeyHSD(anova_model)
+```
+
+**Significant Differences**
+
+3 vs 1, 3 vs 2, and 4 vs 3 (p \< 0.001) - 2 vs 1 (p = 0.028) is marginally significant
+
+4 vs 1 and 4 vs 2 are **not** significant
+
+**Conclusion**
+
+Category 3 is significantly different from others, particularly categories 1 and 2.
+
+## (d) Normality of residuals [3 marks]
+
+```{r q3d, echo=FALSE,warning=FALSE}
+# Extract residuals
+resid_vals <- residuals(anova_model)
+
+# Normality test
+shapiro.test(resid_vals)
+
+# Q-Q Plot
+qqnorm(resid_vals)
+qqline(resid_vals)
+```
+
+**Shapiro-Wilk Test Result** W = 0.96977, p-value = 5.494e-05
+
+**Hypotheses**
+
+$H_0$: Residuals are normally distributed\
+$H_A$: Residuals are not normally distributed
+
+**Decision**
+
+Reject $H_0$ (p \< 0.05)
+
+**Conclusion**
+
+Residuals are **not normally distributed**, supported by both a low p-value and visible deviations from the normal line in the Q-Q plot.
+
+------------------------------------------------------------------------
+\newpage
+
+
+# Question 4: Linear regression [18 marks]
+
+## (a) Variance inflation factor (VIF) for multicollinearity [3 marks]
+
+```{r q4a-vif, echo=FALSE,warning=FALSE}
+library(car)
+wide_data <- data %>% 
+  group_by(date) %>% 
+  summarise(
+    index1 = index[category == 1],
+    index2 = index[category == 2],
+    index3 = index[category == 3]
+  )
+
+vif_model <- lm(index1 ~ index2 + index3, data = wide_data)
+vif(vif_model)
+```
+
+**Interpretation**: VIF values were
+
+index2: **1.023**
+
+index3: **1.023**
+
+Both are well below 5, suggesting no multicollinearity concern.
+
+## (b) Fit the model and write regression equation [3 marks]
+
+```{r q4b-fit, echo=FALSE,warning=FALSE}
+fit <- lm(index1 ~ index2 + index3, data = wide_data)
+summary(fit)
+```
+
+**Estimated equation** $$ \hat{\text{Health}} = 12.41 + 0.487\cdot \text{Alcohol} + 0.403\cdot \text{Food} $$
+
+Model fit
+
+Adjusted R² = **0.711**, F(2,57) = **73.67**, p \< 0.001.
+
+## (c) Hypothesis test
+
+## Does alcohol index decrease health? [3 marks]
+
+```{r q4c, echo=FALSE,warning=FALSE}
+confint(fit)
+```
+
+**Hypotheses**
+
+$H_0: \beta_1 \leq -0.3$
+
+$H_A: \beta_1 > -0.3$
+
+95% CI for $\beta_1$: (0.355, 0.619). Since the entire interval is \> -0.3, we **reject** $H_0$.
+
+**Conclusion**
+
+There is strong evidence that an increase in alcohol index is associated with more than a 0.3 unit **increase**, not decrease, in health index.
+
+## (d) Diagnostic plots to assess regression assumptions [3 marks]
+
+```{r q4d-diagnostics, echo=FALSE,warning=FALSE}
+par(mfrow = c(2, 2))
+plot(fit)
+par(mfrow = c(1, 1))
+```
+
+**Assessment**
+
+**Linearity**
+
+Some curve in Residuals vs Fitted → mild non-linearity
+
+**Normality**
+
+Q-Q plot shows slight deviation at tails
+
+**Homoscedasticity**
+
+Scale-Location plot is fairly level
+
+**Influence**
+
+Observations 16, 48, 24 show high leverage (see Cook’s D)
+
+Assumptions mostly hold but should monitor influential points.
+
+## (e) Test for independence of residuals [3 marks]
+
+```{r q4e-dwtest, echo=FALSE,warning=FALSE}
+library(lmtest)
+dwtest(fit)
+```
+
+**Durbin-Watson test**: DW = 0.961, p = 3.42e-06 → **Reject** $H_0$
+
+**Conclusion**: Residuals are **autocorrelated**, violating independence assumption. Inference from regression may be biased.
+
+## (f) Influence analysis and refitting [3 marks]
+
+```{r q4f-influence, echo=FALSE,warning=FALSE}
+influence <- cooks.distance(fit)
+influential_points <- order(influence, decreasing = TRUE)[1:2]
+reduced_fit <- lm(index1 ~ index2 + index3, data = wide_data[-influential_points, ])
+summary(reduced_fit)
+```
+
+$$ \hat{\text{Health}} = -2.85 + 0.536\cdot \text{Alcohol} + 0.477\cdot \text{Food} $$
+
+**Model improvement**
+
+Adjusted R² increased from **0.711** → **0.782** - Standard error reduced from 6.06 → **5.32**
+
+**Conclusion**
+
+Excluding influential points improved model fit and increased the estimated impact of both predictors.
+
+## References
+
+-   Lecture Notes: *37010 Statistics Chapter 3* (Scott Alexander, UTS)
+-   R Documentation: `aov()`, `TukeyHSD()`, `shapiro.test()`
