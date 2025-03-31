@@ -49,7 +49,7 @@ This repository contains R Markdown code and outputs for **Assignment Part A** o
 
 ## 👤 Author
 
-Bonface Osindi  
+Franklin Kipkorir  
 *UTS Master’s Student, Autumn 2025*
 
 ---
